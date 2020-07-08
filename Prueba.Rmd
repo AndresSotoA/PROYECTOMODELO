@@ -1,0 +1,132 @@
+---
+title: "CLASSE"
+author: "ANDRES SOTO"
+date: "7/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls())
+```
+
+## Repositorio de Github
+<>
+## Cargando librería
+```{r, warning=FALSE}
+library(caret)
+```
+
+## Leyendo los datos
+```{r}
+testing <- read.csv("pml-testing.csv")
+training <- read.csv("pml-training.csv")
+dim(testing)
+dim(training)
+#Tenemos un total de 160 características y 19622 filas en training. Y un total de 160 características y 20 filas en testing.
+```
+
+## Diviendo los datos
+```{r}
+inTrain <- createDataPartition(y=training$classe, p = 0.75, list = FALSE)
+training1 <-training[inTrain,]
+testing1 <-training[-inTrain,]
+
+```
+
+## Visualizando la estructura de los datos
+```{r, comment= ""}
+str(training1[1:10])
+```
+
+
+### Quitando campos que no servirán como predictoras
+```{r}
+#En training1
+training1$X <- NULL
+training1$user_name <- NULL
+training1$cvtd_timestamp <- NULL
+#En testing1
+testing1$X <- NULL
+testing1$user_name <- NULL
+testing1$cvtd_timestamp <- NULL
+#En testing
+testing$X <- NULL
+testing$user_name <- NULL
+testing$cvtd_timestamp <- NULL
+```
+
+## Quitando variables que no tienen variabilidad
+```{r}
+cero <- nearZeroVar(training1)
+training1 <- training1[, -cero]
+testing1 <- testing1[, -cero]
+testing <- testing[, names(training1[-which(names(training1)== "classe")])]
+```
+
+
+## Valores perdidos
+```{r}
+sum(is.na(training1))
+tna <- apply(training1, 2,is.na)
+sna <- apply(tna, 2,sum)
+
+#Eliminando variables con al menos 20% de perdidos.
+perdidos <- which(sna/dim(training1)[1]>0.20)
+training1clean <-training1[,-perdidos]
+testing1clean <-testing1[,-perdidos]
+testclean <-testing[,-perdidos]
+
+```
+
+## Correlación entre variables predictoras
+```{r}
+y <- which(names(training1clean)== "classe")
+#Aplicando valor absoluto a la matriz de correlaciones
+m <- abs(cor(training1clean[,-y]))
+#Asignando a la diagonal de la matriz ceros
+diag(m) <- 0
+#Seleccionando aquellas correlaciones mayores que 0.6
+head(which(m >0.6, arr.ind = T))
+#Hay muchas variables que están correlacionadas, por lo tanto usaremos ACP.
+```
+
+## ACP
+```{r }
+#Quitando classe de la tabla de datos para aplicar ACP
+y <- which(names(training1clean)== "classe")
+preProc <- preProcess(training1clean[,-y], method = "pca", thresh = 0.95)
+#Aplicando ACP al resto de tablas de datos
+train1PC <- predict(preProc, training1clean)
+testing1PC <- predict(preProc, testing1clean)
+testingPC <- predict(preProc, testclean)
+```
+
+## Construyendo el modelo con random forest
+```{r}
+modrf <- train(classe ~ .,data = train1PC, method = "rf")
+summary(modrf)
+```
+
+
+
+# Evaluando el modelo Random Forest
+Con los datos de train (error 0%)
+```{r}
+confusionMatrix(train2PC$classe, predict(modrf, train2PC))
+#El porcentaje de aciertos del total de valores reales para cada clase supera 94%.
+#Por lo tanto concluimos que es un buen modelo.
+```
+Si utilizamos los datos de train para evaluar el modelo, me dará un accuracy subestimado, y este tiene error 0%, sin embargo para los datos de testing el error posiblemente sea 5%.
+
+Con los datos de testing
+```{r}
+confusionMatrix(train2PC$classe, predict(modrf, train2PC))
+#El porcentaje de aciertos del total de valores reales para cada clase supera 94%. Por lo tanto concluimos que es un buen modelo.
+```
+
+# Prediciendo para nuevos casos
+```{r}
+data.frame(1:20,Clase =predict(modrf, testingPC))
+```
+
