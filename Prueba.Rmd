@@ -11,7 +11,7 @@ rm(list = ls())
 ```
 
 ## Repositorio de Github
-<>
+<https://github.com/AndresSotoA/PROYECTOMODELO/blob/master/Prueba.Rmd>
 ## Cargando librería
 ```{r, warning=FALSE}
 library(caret)
