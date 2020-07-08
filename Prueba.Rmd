@@ -113,15 +113,13 @@ summary(modrf)
 # Evaluando el modelo Random Forest
 Con los datos de train (error 0%)
 ```{r}
-confusionMatrix(train2PC$classe, predict(modrf, train2PC))
-#El porcentaje de aciertos del total de valores reales para cada clase supera 94%.
-#Por lo tanto concluimos que es un buen modelo.
+confusionMatrix(train1PC$classe, predict(modrf, train1PC))
 ```
-Si utilizamos los datos de train para evaluar el modelo, me dará un accuracy subestimado, y este tiene error 0%, sin embargo para los datos de testing el error posiblemente sea 5%.
+El error es 0% con los datos train, sin embargo hay problema de overfitting. Ahora probaremos con los de testing que posiblemente nos de un error del 5%.
 
 Con los datos de testing
 ```{r}
-confusionMatrix(train2PC$classe, predict(modrf, train2PC))
+confusionMatrix(testing1PC$classe, predict(modrf, testing1PC))
 #El porcentaje de aciertos del total de valores reales para cada clase supera 94%. Por lo tanto concluimos que es un buen modelo.
 ```
 
